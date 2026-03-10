@@ -41,8 +41,8 @@ export default function Home() {
             Immediate Next Steps
           </p>
           <ol className="mt-6 space-y-4 text-sm leading-7 text-[#ded5ca]">
-            <li>1. Set `.env` values for the target region, complex, and Naver auth cookie.</li>
-            <li>2. Run `pnpm playwright:install` once on the host.</li>
+            <li>1. Set `.env.local` values for the target region, complex, and local auth path.</li>
+            <li>2. Run `pnpm playwright:install` and `pnpm naver:login` on the host.</li>
             <li>3. Validate selectors in `lib/naver/crawl.ts` against the real listing page.</li>
             <li>4. Lock the Excel column contract with stakeholders before expanding the schema.</li>
           </ol>
@@ -61,8 +61,8 @@ export default function Home() {
             </pre>
           </div>
           <p className="mt-5 text-sm leading-7 text-muted">
-            Without `NAVER_COOKIE`, the crawl route returns a safe sample preview
-            so the export flow can be exercised before live credentials are wired in.
+            The crawl route now prefers a local Playwright storage-state file, falls back
+            to `NAVER_COOKIE`, and returns a safe sample preview only when no live auth is available.
           </p>
         </div>
 

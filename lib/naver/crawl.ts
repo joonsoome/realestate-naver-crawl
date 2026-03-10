@@ -2,6 +2,7 @@ import { chromium } from "playwright";
 
 import type { ListingRecord } from "@/types/listing";
 
+import { resolveNaverAuthConfig } from "./auth";
 import type { CrawlRequest } from "./schema";
 
 const baseUrl =
@@ -25,23 +26,29 @@ function buildPreviewListings(input: CrawlRequest): ListingRecord[] {
 }
 
 export async function crawlListings(input: CrawlRequest): Promise<ListingRecord[]> {
-  const cookie = process.env.NAVER_COOKIE;
-  if (!cookie) {
+  const authConfig = await resolveNaverAuthConfig();
+  if (authConfig.source === "none") {
     return buildPreviewListings(input);
   }
 
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  const context =
+    authConfig.source === "storage-state"
+      ? await browser.newContext({ storageState: authConfig.storageStatePath })
+      : await browser.newContext();
+  const page = await context.newPage();
 
   try {
-    await page.context().addCookies([
-      {
-        name: "NAC",
-        value: cookie,
-        domain: ".naver.com",
-        path: "/",
-      },
-    ]);
+    if (authConfig.source === "cookie") {
+      await context.addCookies([
+        {
+          name: "NAC",
+          value: authConfig.cookie,
+          domain: ".naver.com",
+          path: "/",
+        },
+      ]);
+    }
 
     const targetUrl = `${baseUrl}/complexes/${input.complexNo}?ms=${input.regionCode}&articleNo=&tradeType=A1&tag=::::::::`;
     await page.goto(targetUrl, { waitUntil: "networkidle" });
@@ -63,6 +70,7 @@ export async function crawlListings(input: CrawlRequest): Promise<ListingRecord[
       },
     ];
   } finally {
+    await context.close();
     await browser.close();
   }
 }

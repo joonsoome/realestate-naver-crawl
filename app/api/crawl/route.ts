@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getCrawlMode } from "@/lib/naver/auth";
 import { crawlListings } from "@/lib/naver/crawl";
 import { crawlRequestSchema } from "@/lib/naver/schema";
 
@@ -14,10 +15,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const listings = await crawlListings(parsed.data);
+  const [listings, mode] = await Promise.all([
+    crawlListings(parsed.data),
+    getCrawlMode(),
+  ]);
 
   return NextResponse.json({
-    mode: process.env.NAVER_COOKIE ? "live-preview" : "sample-preview",
+    mode,
     count: listings.length,
     listings,
   });
